@@ -12,12 +12,28 @@ import com.example.restwebservice.entities.User;
 import com.example.restwebservice.exceptions.CartIsEmptyException;
 import com.example.restwebservice.repositories.OrderRepository;
 import com.example.restwebservice.repositories.UserRepository;
+import com.opencsv.CSVWriter;
+import com.opencsv.bean.CsvToBean;
+import com.opencsv.bean.CsvToBeanBuilder;
+import com.opencsv.bean.StatefulBeanToCsv;
+import com.opencsv.bean.StatefulBeanToCsvBuilder;
+import com.opencsv.exceptions.CsvDataTypeMismatchException;
+import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -88,5 +104,36 @@ public class OrderService {
         Order order = Optional.ofNullable(orderRepository.findById(id))
                 .orElseThrow(() -> new EntityNotFoundException(String.format("Order with id %d not found", id)));
         return order.getProductList().stream().map(productConverter::toDto).toList();
+    }
+
+    public void downloadOrdersToFile(List<OrderDto> orders, String path)
+            throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
+        int userId = orders.get(0).getUserId();
+        try (Writer writer = Files.newBufferedWriter(Path.of(path + String.format("/userId- %d - orders.csv", userId)))) {
+            StatefulBeanToCsv<OrderDto> beanToCsv = new StatefulBeanToCsvBuilder<OrderDto>(writer)
+                    .withQuotechar(CSVWriter.NO_QUOTE_CHARACTER)
+                    .withSeparator(',')
+                    .build();
+            beanToCsv.write(orders);
+        }
+    }
+
+    public List<OrderDto> uploadOrdersFromFile(MultipartFile file) throws IOException {
+        try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            CsvToBean<OrderDto> csvToBean = new CsvToBeanBuilder<OrderDto>(reader)
+                    .withType(OrderDto.class)
+                    .withIgnoreLeadingWhiteSpace(true)
+                    .withIgnoreQuotations(true)
+                    .withSeparator(',')
+                    .build();
+            List<OrderDto> ordersDtoList = new ArrayList<>();
+            List<Order> orders = new ArrayList<>();
+            csvToBean.forEach(ordersDtoList::add);
+            for (OrderDto dto : ordersDtoList) {
+                Order o = orderRepository.createOrUpdateOrder(orderConverter.fromDto(dto));
+                orders.add(o);
+            }
+            return orders.stream().map(orderConverter::toDto).toList();
+        }
     }
 }

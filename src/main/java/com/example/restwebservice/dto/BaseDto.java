@@ -1,5 +1,6 @@
 package com.example.restwebservice.dto;
 
+import com.opencsv.bean.CsvBindByName;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
@@ -17,5 +18,6 @@ public class BaseDto {
 
     @NotNull
     @Digits(integer = 5, fraction = 0)
+    @CsvBindByName
     protected int id;
 }

@@ -1,6 +1,7 @@
 package com.example.restwebservice.entities;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
@@ -25,6 +26,7 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "orders")
+
 public class Order extends BaseEntity {
 
     private int price;
@@ -35,7 +37,7 @@ public class Order extends BaseEntity {
 
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    @ManyToMany()
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "orders_products", joinColumns = @JoinColumn(name = "order_id"),
             inverseJoinColumns = @JoinColumn(name = "product_id"))
     private List<Product> productList;

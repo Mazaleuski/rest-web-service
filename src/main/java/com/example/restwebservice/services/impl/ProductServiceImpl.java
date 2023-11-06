@@ -6,10 +6,26 @@ import com.example.restwebservice.entities.Product;
 import com.example.restwebservice.repositories.CategoryRepository;
 import com.example.restwebservice.repositories.ProductRepository;
 import com.example.restwebservice.services.ProductService;
+import com.opencsv.CSVWriter;
+import com.opencsv.bean.CsvToBean;
+import com.opencsv.bean.CsvToBeanBuilder;
+import com.opencsv.bean.StatefulBeanToCsv;
+import com.opencsv.bean.StatefulBeanToCsvBuilder;
+import com.opencsv.exceptions.CsvDataTypeMismatchException;
+import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -69,5 +85,38 @@ public class ProductServiceImpl implements ProductService {
         Product product = Optional.ofNullable(productRepository.findById(id))
                 .orElseThrow(() -> new EntityNotFoundException(String.format("Product with id %d not found", id)));
         return productConverter.toDto(product);
+    }
+
+    @Override
+    public void downloadProductsToFile(List<ProductDto> products, String path)
+            throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
+        int categoryId = products.get(0).getCategoryId();
+        try (Writer writer = Files.newBufferedWriter(Path.of(path + String.format("/categoryId- %d - products.csv", categoryId)))) {
+            StatefulBeanToCsv<ProductDto> beanToCsv = new StatefulBeanToCsvBuilder<ProductDto>(writer)
+                    .withQuotechar(CSVWriter.NO_QUOTE_CHARACTER)
+                    .withSeparator(',')
+                    .build();
+            beanToCsv.write(products);
+        }
+    }
+
+    @Override
+    public List<ProductDto> uploadProductsFromFile(MultipartFile file) throws IOException {
+        try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
+            CsvToBean<ProductDto> csvToBean = new CsvToBeanBuilder<ProductDto>(reader)
+                    .withType(ProductDto.class)
+                    .withIgnoreLeadingWhiteSpace(true)
+                    .withIgnoreQuotations(true)
+                    .withSeparator(',')
+                    .build();
+            List<ProductDto> productDtoList = new ArrayList<>();
+            List<Product> products = new ArrayList<>();
+            csvToBean.forEach(productDtoList::add);
+            for (ProductDto dto : productDtoList) {
+                Product p = productRepository.createOrUpdateProduct(productConverter.fromDto(dto));
+                products.add(p);
+            }
+            return products.stream().map(productConverter::toDto).toList();
+        }
     }
 }
