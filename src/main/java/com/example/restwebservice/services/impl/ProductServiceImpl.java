@@ -14,6 +14,7 @@ import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,10 +22,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -88,14 +88,17 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void downloadProductsToFile(List<ProductDto> products, String path)
+    public void downloadProductsToFile(List<ProductDto> products, HttpServletResponse response)
             throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
         int categoryId = products.get(0).getCategoryId();
-        try (Writer writer = Files.newBufferedWriter(Path.of(path + String.format("/categoryId- %d - products.csv", categoryId)))) {
+        try (Writer writer = new OutputStreamWriter(response.getOutputStream())) {
             StatefulBeanToCsv<ProductDto> beanToCsv = new StatefulBeanToCsvBuilder<ProductDto>(writer)
                     .withQuotechar(CSVWriter.NO_QUOTE_CHARACTER)
                     .withSeparator(',')
                     .build();
+            response.setContentType("text/csv");
+            response.setHeader("Content-Disposition", "attachment; filename="
+                    + String.format("Category %d - products.csv", categoryId));
             beanToCsv.write(products);
         }
     }

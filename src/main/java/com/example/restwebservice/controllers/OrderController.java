@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -195,10 +196,9 @@ public class OrderController {
     })
 
     @PostMapping("/download")
-    public void downloadOrdersToFile(@RequestBody List<OrderDto> orders,
-                                     @Parameter(description = "Path for download") @RequestParam String path)
+    public void downloadOrdersToFile(@RequestBody List<OrderDto> orders, HttpServletResponse response)
             throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
-        orderService.downloadOrdersToFile(orders, path);
+        orderService.downloadOrdersToFile(orders, response);
     }
 
     @Operation(
