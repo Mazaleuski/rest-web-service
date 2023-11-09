@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -210,10 +211,9 @@ public class ProductController {
     })
 
     @PostMapping("/download")
-    public void downloadProductsToFile(@RequestBody List<ProductDto> products,
-                                       @Parameter(description = "Path for download") @RequestParam String path)
+    public void downloadProductsToFile(@RequestBody List<ProductDto> products, HttpServletResponse response)
             throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
-        productService.downloadProductsToFile(products, path);
+        productService.downloadProductsToFile(products, response);
     }
 
     @Operation(
