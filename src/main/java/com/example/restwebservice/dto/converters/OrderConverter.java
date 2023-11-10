@@ -32,7 +32,7 @@ public class OrderConverter {
         return Optional.ofNullable(orderDto).map(o -> Order.builder()
                         .price(o.getPrice())
                         .date(o.getDate())
-                        .user(userRepository.findById(o.getUserId()))
+                        .user(userRepository.findById(o.getUserId()).orElse(null))
                         .productList(Optional.ofNullable(o.getProductList()).map(products -> products
                                 .stream().map(productConverter::fromDto).toList()).orElse(List.of()))
                         .build())

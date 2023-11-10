@@ -1,6 +1,7 @@
 package com.example.restwebservice.controllers;
 
 import com.example.restwebservice.dto.ProductDto;
+import com.example.restwebservice.dto.SearchParamsDto;
 import com.example.restwebservice.services.ProductService;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
@@ -60,8 +61,11 @@ public class ProductController {
     })
 
     @GetMapping("/all")
-    public ResponseEntity<List<ProductDto>> getAllProducts() {
-        return new ResponseEntity<>(productService.getAllProducts(), HttpStatus.OK);
+    public ResponseEntity<List<ProductDto>> getAllProducts(
+            @Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
+            @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize
+    ) {
+        return new ResponseEntity<>(productService.getAllProducts(pageNumber, pageSize), HttpStatus.OK);
     }
 
     @Operation(
@@ -169,33 +173,43 @@ public class ProductController {
     })
 
     @GetMapping("/category/{id}")
-    public ResponseEntity<List<ProductDto>> getProductByCategoryId(@Parameter(required = true, description = "Category id")
-                                                                   @PathVariable @Positive int id) {
-        return Optional.ofNullable(productService.getProductByCategoryId(id))
+    public ResponseEntity<List<ProductDto>> getProductByCategoryId(
+            @Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
+            @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize,
+            @Parameter(required = true, description = "Category id")
+            @PathVariable @Positive int id) {
+        return Optional.ofNullable(productService.getProductByCategoryId(id, pageNumber, pageSize))
                 .map(dto -> new ResponseEntity<>(dto, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @Operation(
             summary = "Search products",
-            description = "Search existed products in shop by string",
+            description = "Search existed products in shop by string, category and price",
             tags = {"product"})
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
-                    description = "Products were found by string",
+                    description = "Products found",
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = ProductDto.class)))
             ),
             @ApiResponse(
-                    responseCode = "403",
-                    description = "Products not fount - forbidden operation"
+                    responseCode = "400",
+                    description = "Products not fount"
             )
     })
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true,
+            description = "Search product",
+            content = @Content(schema = @Schema(implementation = SearchParamsDto.class))
+    )
 
-    @GetMapping("/search/{search}")
-    public ResponseEntity<List<ProductDto>> searchProduct(@Parameter(required = true, description = "String for search")
-                                                          @PathVariable String search) {
-        return Optional.ofNullable(productService.searchProducts(search))
+    @PostMapping("/search")
+    public ResponseEntity<List<ProductDto>> searchProduct(
+            @RequestBody SearchParamsDto searchParamsDto,
+            @Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
+            @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize) {
+        return Optional.ofNullable(productService.searchProducts(searchParamsDto,pageNumber,pageSize))
                 .map(dto -> new ResponseEntity<>(dto, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }

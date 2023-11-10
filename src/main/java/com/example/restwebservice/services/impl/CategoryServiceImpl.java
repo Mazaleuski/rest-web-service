@@ -15,6 +15,9 @@ import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,7 +29,6 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 
 @Service
@@ -37,13 +39,14 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryConverter categoryConverter;
 
     @Override
-    public List<CategoryDto> getAllCategories() {
-        return categoryRepository.findAll().stream().map(categoryConverter::toDto).toList();
+    public List<CategoryDto> getAllCategories(int pageNumber,int pageSize) {
+        Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by("id").ascending());
+        return categoryRepository.findAll(paging).stream().map(categoryConverter::toDto).toList();
     }
 
     @Override
     public CategoryDto getCategoryById(int id) {
-        Category category = Optional.ofNullable(categoryRepository.findById(id))
+        Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(String.format("Category with id %d not found", id)));
         return categoryConverter.toDto(category);
     }
@@ -51,22 +54,24 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryDto createCategory(CategoryDto categoryDto) {
         Category category = categoryConverter.fromDto(categoryDto);
-        category = categoryRepository.createOrUpdateCategory(category);
+        category = categoryRepository.save(category);
         return categoryConverter.toDto(category);
     }
 
     @Override
     public CategoryDto updateCategory(CategoryDto categoryDto) {
-        Category category = Optional.ofNullable(categoryRepository.findById(categoryDto.getId()))
+        Category category = categoryRepository.findById(categoryDto.getId())
                 .orElseThrow(() -> new EntityNotFoundException(String.format("Category with id %d not found", categoryDto.getId())));
         category.setName(categoryDto.getName());
         category.setRating(categoryDto.getRating());
-        return categoryConverter.toDto(categoryRepository.createOrUpdateCategory(category));
+        return categoryConverter.toDto(categoryRepository.save(category));
     }
 
     @Override
     public void deleteCategory(int id) {
-        categoryRepository.delete(id);
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(String.format("Category with id %d not found", id)));
+        categoryRepository.delete(category);
     }
 
     @Override
@@ -82,7 +87,7 @@ public class CategoryServiceImpl implements CategoryService {
             List<Category> categories = new ArrayList<>();
             csvToBean.forEach(categoryDtoList::add);
             for (CategoryDto dto : categoryDtoList) {
-                Category c = categoryRepository.createOrUpdateCategory(categoryConverter.fromDto(dto));
+                Category c = categoryRepository.save(categoryConverter.fromDto(dto));
                 categories.add(c);
             }
             return categories.stream().map(categoryConverter::toDto).toList();

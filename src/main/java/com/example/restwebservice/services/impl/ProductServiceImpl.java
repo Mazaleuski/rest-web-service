@@ -1,10 +1,12 @@
 package com.example.restwebservice.services.impl;
 
 import com.example.restwebservice.dto.ProductDto;
+import com.example.restwebservice.dto.SearchParamsDto;
 import com.example.restwebservice.dto.converters.ProductConverter;
 import com.example.restwebservice.entities.Product;
 import com.example.restwebservice.repositories.CategoryRepository;
 import com.example.restwebservice.repositories.ProductRepository;
+import com.example.restwebservice.repositories.ProductSearchSpecification;
 import com.example.restwebservice.services.ProductService;
 import com.opencsv.CSVWriter;
 import com.opencsv.bean.CsvToBean;
@@ -16,6 +18,10 @@ import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,7 +33,6 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -38,51 +43,53 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
 
     @Override
-    public List<ProductDto> getAllProducts() {
-        return productRepository.findAll().stream().map(productConverter::toDto).toList();
+    public List<ProductDto> getAllProducts(int pageNumber, int pageSize) {
+        Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by("id").ascending());
+        return productRepository.findAll(paging).stream().map(productConverter::toDto).toList();
     }
 
     @Override
-    public List<ProductDto> searchProducts(String search) {
-        return productRepository.findByNameOrDescription(search).stream().map(productConverter::toDto).toList();
+    public List<ProductDto> searchProducts(SearchParamsDto searchParamsDto, int pageNumber, int pageSize) {
+        Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by("name").ascending());
+        ProductSearchSpecification productSearchSpecification = new ProductSearchSpecification(searchParamsDto);
+        return productRepository.findAll(productSearchSpecification, paging).stream().map(productConverter::toDto).toList();
     }
 
     @Override
-    public List<ProductDto> getProductByCategoryId(int id) {
-        if (categoryRepository.findById(id) == null) {
-            throw new EntityNotFoundException(String.format("Category with id %d not found", id));
-        }
-        List<ProductDto> list = productRepository.findByCategoryId(id).stream().map(productConverter::toDto).toList();
-        if (list.size() == 0) {
-            throw new EntityNotFoundException(String.format("Category with id %d dont have products", id));
-        }
-        return list;
+    public List<ProductDto> getProductByCategoryId(int id, int pageNumber, int pageSize) {
+        Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by("id").ascending());
+        categoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(String.format("Category with id %d not found", id)));
+        Page<Product> products = productRepository.findAllByCategoryId(id, paging);
+        return products.getContent().stream().map(productConverter::toDto).toList();
     }
 
     @Override
     public ProductDto createProduct(ProductDto productDto) {
         Product product = productConverter.fromDto(productDto);
-        product = productRepository.createOrUpdateProduct(product);
+        product = productRepository.save(product);
         return productConverter.toDto(product);
     }
 
     @Override
     public void deleteProduct(int id) {
-        productRepository.delete(id);
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(String.format("Product with id %d not found", id)));
+        productRepository.delete(product);
     }
 
     @Override
     public ProductDto updateProduct(ProductDto productDto) {
-        Product product = Optional.ofNullable(productRepository.findById(productDto.getId()))
+        Product product = productRepository.findById(productDto.getId())
                 .orElseThrow(() -> new EntityNotFoundException(String.format("Product with id %d not found", productDto.getId())));
         product.setName(productDto.getName());
         product.setDescription(productDto.getDescription());
-        return productConverter.toDto(productRepository.createOrUpdateProduct(product));
+        return productConverter.toDto(productRepository.save(product));
     }
 
     @Override
     public ProductDto getProductById(int id) {
-        Product product = Optional.ofNullable(productRepository.findById(id))
+        Product product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(String.format("Product with id %d not found", id)));
         return productConverter.toDto(product);
     }
@@ -116,7 +123,7 @@ public class ProductServiceImpl implements ProductService {
             List<Product> products = new ArrayList<>();
             csvToBean.forEach(productDtoList::add);
             for (ProductDto dto : productDtoList) {
-                Product p = productRepository.createOrUpdateProduct(productConverter.fromDto(dto));
+                Product p = productRepository.save(productConverter.fromDto(dto));
                 products.add(p);
             }
             return products.stream().map(productConverter::toDto).toList();

@@ -23,6 +23,10 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,7 +39,6 @@ import java.io.Writer;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 
 @Service
@@ -59,49 +62,49 @@ public class OrderService {
                 .user(userConverter.fromDto(userDto))
                 .productList(cartDto.getProducts().stream().map(productConverter::fromDto).toList())
                 .build();
-        order = orderRepository.createOrUpdateOrder(order);
+        order = orderRepository.save(order);
         OrderDto orderDto = orderConverter.toDto(order);
         userDto.getOrders().add(orderDto);
-        userRepository.createOrUpdateUser(userConverter.fromDto(userDto));
+        userRepository.save(userConverter.fromDto(userDto));
         cartDto.clear();
         cartDto.setTotalPrice(0);
         return orderDto;
     }
 
     public OrderDto updateOrder(OrderDto orderDto) {
-        Order order = Optional.ofNullable(orderRepository.findById(orderDto.getId()))
+        Order order = orderRepository.findById(orderDto.getId())
                 .orElseThrow(() -> new EntityNotFoundException(String.format("Order with id %d not found", orderDto.getId())));
-        User user = userRepository.findById(orderDto.getUserId());
+        User user = userRepository.findById(orderDto.getUserId())
+                .orElseThrow(() -> new EntityNotFoundException(String.format("User with id %d not found", orderDto.getUserId())));
         order.setUser(user);
         order.setProductList(orderDto.getProductList().stream().map(productConverter::fromDto).toList());
         order.setPrice(order.getPrice());
-        orderRepository.createOrUpdateOrder(order);
+        orderRepository.save(order);
         return orderDto;
     }
 
     public void deleteOrder(int id) {
-        orderRepository.delete(id);
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(String.format("Order with id %d not found", id)));
+        orderRepository.delete(order);
     }
 
     public OrderDto getOrderById(int id) {
-        Order order = Optional.ofNullable(orderRepository.findById(id))
+        Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(String.format("Order with id %d not found", id)));
         return orderConverter.toDto(order);
     }
 
-    public List<OrderDto> getOrdersByUserId(int id) {
-        if (userRepository.findById(id) == null) {
-            throw new EntityNotFoundException(String.format("User with id %d not found", id));
-        }
-        List<OrderDto> list = orderRepository.findByUserId(id).stream().map(orderConverter::toDto).toList();
-        if (list.size() == 0) {
-            throw new EntityNotFoundException(String.format("User with id %d dont have orders", id));
-        }
-        return list;
+    public List<OrderDto> getOrdersByUserId(int id, int pageNumber, int pageSize) {
+        Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by("id").ascending());
+        userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(String.format("User with id %d not found", id)));
+        Page<Order> orders = orderRepository.findAllByUserId(id, paging);
+        return orders.getContent().stream().map(orderConverter::toDto).toList();
     }
 
     public List<ProductDto> getProductByOrderId(int id) {
-        Order order = Optional.ofNullable(orderRepository.findById(id))
+        Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(String.format("Order with id %d not found", id)));
         return order.getProductList().stream().map(productConverter::toDto).toList();
     }
@@ -133,7 +136,7 @@ public class OrderService {
             List<Order> orders = new ArrayList<>();
             csvToBean.forEach(ordersDtoList::add);
             for (OrderDto dto : ordersDtoList) {
-                Order o = orderRepository.createOrUpdateOrder(orderConverter.fromDto(dto));
+                Order o = orderRepository.save(orderConverter.fromDto(dto));
                 orders.add(o);
             }
             return orders.stream().map(orderConverter::toDto).toList();
