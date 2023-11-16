@@ -31,10 +31,10 @@ CREATE TABLE `shop_hib`.`categories`
 
 CREATE TABLE `shop_hib`.`orders`
 (
-    `id`      INT      NOT NULL AUTO_INCREMENT,
-    `date`    DATETIME NOT NULL,
-    `user_id` INT      NOT NULL,
-    `price`   INT      NOT NULL,
+    `id`      INT  NOT NULL AUTO_INCREMENT,
+    `date`    DATE NOT NULL,
+    `user_id` INT  NOT NULL,
+    `price`   INT  NOT NULL,
     PRIMARY KEY (`id`),
     UNIQUE INDEX `id` (`id` ASC),
     CONSTRAINT fk_orders_user_id_users_id
