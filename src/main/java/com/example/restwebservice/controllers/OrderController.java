@@ -22,6 +22,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -64,7 +65,7 @@ public class OrderController {
                     content = @Content(schema = @Schema(implementation = String.class))
             )
     })
-
+    @PreAuthorize("hasAuthority('USER')")
     @PostMapping
     public ResponseEntity<OrderDto> createOrder(@RequestBody CartDto cartDto, @RequestBody @Valid UserDto userDto) throws CartIsEmptyException {
         return new ResponseEntity<>(orderService.create(userDto, cartDto), HttpStatus.CREATED);
@@ -87,6 +88,7 @@ public class OrderController {
             )
     })
 
+    @PreAuthorize("hasAuthority('USER')")
     @PutMapping
     public ResponseEntity<OrderDto> updateOrder(@RequestBody @Valid OrderDto orderDto) {
         return new ResponseEntity<>(orderService.updateOrder(orderDto), HttpStatus.OK);
@@ -108,6 +110,7 @@ public class OrderController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteOrder(@Parameter(description = "Order id") @PathVariable @Positive int id) {
         orderService.deleteOrder(id);
@@ -130,6 +133,7 @@ public class OrderController {
             )
     })
 
+    @PreAuthorize("hasAuthority('USER')")
     @GetMapping("/{id}")
     public ResponseEntity<OrderDto> getOrderById(@Parameter(description = "Order id") @PathVariable @Positive int id) {
         return Optional.ofNullable(orderService.getOrderById(id))
@@ -153,13 +157,13 @@ public class OrderController {
                     content = @Content(schema = @Schema(implementation = String.class))
             )
     })
-
+    @PreAuthorize("hasAuthority('USER')")
     @GetMapping("/user/{id}")
     public ResponseEntity<List<OrderDto>> getOrdersByUserId(
             @Parameter(description = "User id") @PathVariable @Positive int id,
             @Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
             @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize) {
-        return Optional.ofNullable(orderService.getOrdersByUserId(id,pageNumber,pageSize))
+        return Optional.ofNullable(orderService.getOrdersByUserId(id, pageNumber, pageSize))
                 .map(dto -> new ResponseEntity<>(dto, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
@@ -181,6 +185,7 @@ public class OrderController {
             )
     })
 
+    @PreAuthorize("hasAuthority('USER')")
     @GetMapping("/products/{id}")
     public ResponseEntity<List<ProductDto>> getProductByOrderId(@Parameter(description = "Order id") @PathVariable @Positive int id) {
         return Optional.ofNullable(orderService.getProductByOrderId(id))
@@ -197,7 +202,7 @@ public class OrderController {
                     description = "Orders were saved"
             )
     })
-
+    @PreAuthorize("hasAuthority('USER')")
     @PostMapping("/download")
     public void downloadOrdersToFile(@RequestBody List<OrderDto> orders, HttpServletResponse response)
             throws CsvRequiredFieldEmptyException, CsvDataTypeMismatchException, IOException {
@@ -215,6 +220,7 @@ public class OrderController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/upload")
     public ResponseEntity<List<OrderDto>> uploadOrdersFromFile(@Parameter(description = "File for upload ")
                                                                @RequestParam("file") MultipartFile file) throws Exception {

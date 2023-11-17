@@ -1,5 +1,8 @@
 package com.example.restwebservice.controllers;
 
+import com.example.restwebservice.dto.JwtRequest;
+import com.example.restwebservice.dto.JwtResponse;
+import com.example.restwebservice.dto.RefreshJwtRequest;
 import com.example.restwebservice.dto.UserDto;
 import com.example.restwebservice.exceptions.AuthorizationException;
 import com.example.restwebservice.services.UserService;
@@ -16,6 +19,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,6 +58,7 @@ public class UserController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/all")
     public ResponseEntity<List<UserDto>> getAllUsers() {
         return new ResponseEntity<>(userService.getAllUsers(), HttpStatus.OK);
@@ -76,6 +81,7 @@ public class UserController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> getUserById(@Parameter(required = true, description = "User id") @PathVariable @Positive int id) {
         return Optional.ofNullable(userService.getUserById(id))
@@ -105,25 +111,61 @@ public class UserController {
     }
 
     @Operation(
-            summary = "Login user",
-            description = "Authorization registered users in shop",
+            summary = "Authenticate user",
+            description = "Login user and get access token",
             tags = {"user"})
     @ApiResponses(value = {
             @ApiResponse(
-                    responseCode = "201",
-                    description = "User was login",
-                    content = @Content(schema = @Schema(contentSchema = UserDto.class))
+                    responseCode = "200",
+                    description = "Token is returned, user logged in",
+                    content = @Content(schema = @Schema(contentSchema = JwtResponse.class))
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "User was not login",
+                    description = "User not logged in",
                     content = @Content(schema = @Schema(implementation = String.class))
             )
     })
 
     @PostMapping("/login")
-    public ResponseEntity<UserDto> loginUser(@RequestBody @Valid UserDto userDto) throws AuthorizationException {
-        return new ResponseEntity<>(userService.loginUser(userDto), HttpStatus.OK);
+    public JwtResponse login(@RequestBody @Valid JwtRequest request) throws AuthorizationException {
+        return userService.login(request);
+    }
+
+    @Operation(
+            summary = "Access token",
+            description = "Get new access token by refresh token")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Access token send",
+                    content = {@Content(schema = @Schema(implementation = JwtResponse.class)),
+                            @Content(schema = @Schema(implementation = String.class))}
+            ),
+    })
+
+    @PreAuthorize("hasAuthority('USER')")
+    @PostMapping("/token")
+    public JwtResponse getNewAccessToken(@Valid @RequestBody RefreshJwtRequest request) throws AuthorizationException {
+        return userService.getAccessToken(request.getRefreshToken());
+    }
+
+    @Operation(
+            summary = "Refresh token",
+            description = "Get new refresh token")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Refresh token send",
+                    content = {@Content(schema = @Schema(implementation = JwtResponse.class)),
+                            @Content(schema = @Schema(implementation = String.class))}
+            ),
+    })
+
+    @PreAuthorize("hasAuthority('USER')")
+    @PostMapping("/refresh")
+    public JwtResponse getNewRefreshToken(@Valid @RequestBody RefreshJwtRequest request) throws AuthorizationException {
+        return userService.getRefreshToken(request.getRefreshToken());
     }
 
     @Operation(
@@ -143,6 +185,7 @@ public class UserController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping
     public ResponseEntity<UserDto> updateUser(@RequestBody @Valid UserDto userDto) {
         return new ResponseEntity<>(userService.updateUser(userDto), HttpStatus.OK);
@@ -163,6 +206,7 @@ public class UserController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteUser(@Parameter(required = true, description = "User id") @PathVariable @Positive int id) {
         userService.deleteUser(id);

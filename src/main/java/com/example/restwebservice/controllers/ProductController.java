@@ -19,6 +19,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -84,6 +85,7 @@ public class ProductController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping
     public ResponseEntity<ProductDto> createProduct(@RequestBody @Valid ProductDto productDto) {
         return new ResponseEntity<>(productService.createProduct(productDto), HttpStatus.CREATED);
@@ -106,6 +108,7 @@ public class ProductController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping
     public ResponseEntity<ProductDto> updateProduct(@RequestBody @Valid ProductDto productDto) {
         return new ResponseEntity<>(productService.updateProduct(productDto), HttpStatus.OK);
@@ -126,6 +129,7 @@ public class ProductController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteProduct(@Parameter(required = true, description = "Product id") @PathVariable @Positive int id) {
         productService.deleteProduct(id);
@@ -209,7 +213,7 @@ public class ProductController {
             @RequestBody SearchParamsDto searchParamsDto,
             @Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
             @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize) {
-        return Optional.ofNullable(productService.searchProducts(searchParamsDto,pageNumber,pageSize))
+        return Optional.ofNullable(productService.searchProducts(searchParamsDto, pageNumber, pageSize))
                 .map(dto -> new ResponseEntity<>(dto, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
@@ -241,6 +245,7 @@ public class ProductController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/upload")
     public ResponseEntity<List<ProductDto>> uploadProductsFromFile(@Parameter(description = "File for upload ")
                                                                    @RequestParam("file") MultipartFile file) throws Exception {
