@@ -19,6 +19,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,7 +41,6 @@ import java.util.Optional;
 @AllArgsConstructor
 @Validated
 @Tag(name = "product", description = "Product Endpoints")
-
 public class ProductController {
     private final ProductService productService;
 
@@ -61,11 +61,10 @@ public class ProductController {
     })
 
     @GetMapping("/all")
-    public ResponseEntity<List<ProductDto>> getAllProducts(
-            @Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
-            @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize
-    ) {
-        return new ResponseEntity<>(productService.getAllProducts(pageNumber, pageSize), HttpStatus.OK);
+    public ResponseEntity<List<ProductDto>> getAllProducts(@Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
+                                                           @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize,
+                                                           @Parameter(required = true, description = "Search param") @RequestParam(defaultValue = "id") String param) {
+        return new ResponseEntity<>(productService.getAllProducts(pageNumber, pageSize, param), HttpStatus.OK);
     }
 
     @Operation(
@@ -84,6 +83,7 @@ public class ProductController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping
     public ResponseEntity<ProductDto> createProduct(@RequestBody @Valid ProductDto productDto) {
         return new ResponseEntity<>(productService.createProduct(productDto), HttpStatus.CREATED);
@@ -106,6 +106,7 @@ public class ProductController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping
     public ResponseEntity<ProductDto> updateProduct(@RequestBody @Valid ProductDto productDto) {
         return new ResponseEntity<>(productService.updateProduct(productDto), HttpStatus.OK);
@@ -126,6 +127,7 @@ public class ProductController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteProduct(@Parameter(required = true, description = "Product id") @PathVariable @Positive int id) {
         productService.deleteProduct(id);
@@ -173,11 +175,10 @@ public class ProductController {
     })
 
     @GetMapping("/category/{id}")
-    public ResponseEntity<List<ProductDto>> getProductByCategoryId(
-            @Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
-            @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize,
-            @Parameter(required = true, description = "Category id")
-            @PathVariable @Positive int id) {
+    public ResponseEntity<List<ProductDto>> getProductByCategoryId(@Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
+                                                                   @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize,
+                                                                   @Parameter(required = true, description = "Category id")
+                                                                   @PathVariable @Positive int id) {
         return Optional.ofNullable(productService.getProductByCategoryId(id, pageNumber, pageSize))
                 .map(dto -> new ResponseEntity<>(dto, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
@@ -205,11 +206,11 @@ public class ProductController {
     )
 
     @PostMapping("/search")
-    public ResponseEntity<List<ProductDto>> searchProduct(
-            @RequestBody SearchParamsDto searchParamsDto,
-            @Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
-            @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize) {
-        return Optional.ofNullable(productService.searchProducts(searchParamsDto,pageNumber,pageSize))
+    public ResponseEntity<List<ProductDto>> searchProduct(@RequestBody SearchParamsDto searchParamsDto,
+                                                          @Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
+                                                          @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize,
+                                                          @Parameter(required = true, description = "Search param") @RequestParam(defaultValue = "name") String param) {
+        return Optional.ofNullable(productService.searchProducts(searchParamsDto, pageNumber, pageSize, param))
                 .map(dto -> new ResponseEntity<>(dto, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
@@ -241,6 +242,7 @@ public class ProductController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/upload")
     public ResponseEntity<List<ProductDto>> uploadProductsFromFile(@Parameter(description = "File for upload ")
                                                                    @RequestParam("file") MultipartFile file) throws Exception {

@@ -18,6 +18,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,7 +40,6 @@ import java.util.Optional;
 @RequestMapping("/categories")
 @AllArgsConstructor
 @Validated
-
 public class CategoryController {
 
     private final CategoryService categoryService;
@@ -61,10 +61,10 @@ public class CategoryController {
     })
 
     @GetMapping("/all")
-    public ResponseEntity<List<CategoryDto>> getAllCategories(
-            @Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
-            @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize) {
-        return new ResponseEntity<>(categoryService.getAllCategories(pageNumber, pageSize), HttpStatus.OK);
+    public ResponseEntity<List<CategoryDto>> getAllCategories(@Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
+                                                              @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize,
+                                                              @Parameter(required = true, description = "Search param") @RequestParam(defaultValue = "id") String param) {
+        return new ResponseEntity<>(categoryService.getAllCategories(pageNumber, pageSize, param), HttpStatus.OK);
     }
 
     @Operation(
@@ -107,6 +107,7 @@ public class CategoryController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping
     public ResponseEntity<CategoryDto> createCategory(@RequestBody @Valid CategoryDto categoryDto) {
         return new ResponseEntity<>(categoryService.createCategory(categoryDto), HttpStatus.CREATED);
@@ -129,6 +130,7 @@ public class CategoryController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping
     public ResponseEntity<CategoryDto> updateCategory(@RequestBody @Valid CategoryDto categoryDto) {
         return new ResponseEntity<>(categoryService.updateCategory(categoryDto), HttpStatus.OK);
@@ -149,6 +151,7 @@ public class CategoryController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/{id}")
     public void deleteCategory(@Parameter(required = true, description = "Category id") @PathVariable @Positive int id) {
         categoryService.deleteCategory(id);
@@ -181,6 +184,7 @@ public class CategoryController {
             )
     })
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/upload")
     public ResponseEntity<List<CategoryDto>> uploadCategoriesFromFile(@Parameter(description = "File for upload ") @RequestParam("file") MultipartFile file) throws Exception {
         return new ResponseEntity<>(categoryService.uploadCategoriesFromFile(file), HttpStatus.CREATED);

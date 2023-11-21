@@ -39,8 +39,8 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryConverter categoryConverter;
 
     @Override
-    public List<CategoryDto> getAllCategories(int pageNumber,int pageSize) {
-        Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by("id").ascending());
+    public List<CategoryDto> getAllCategories(int pageNumber, int pageSize, String param) {
+        Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by(param).ascending());
         return categoryRepository.findAll(paging).stream().map(categoryConverter::toDto).toList();
     }
 

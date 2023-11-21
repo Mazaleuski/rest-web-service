@@ -1,9 +1,13 @@
 package com.example.restwebservice.config;
 
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +17,7 @@ import org.springframework.context.annotation.Configuration;
 import java.util.List;
 
 @Configuration
+@OpenAPIDefinition(security = {@SecurityRequirement(name = "Bearer Authentication")})
 public class OpenApiConfig {
 
     @Bean
@@ -55,6 +60,13 @@ public class OpenApiConfig {
                 .build();
     }
 
+    private SecurityScheme createSecurityScheme() {
+        return new SecurityScheme().name("Shop")
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT");
+    }
+
     @Bean
     public OpenAPI customOpenApi(@Value("${application.description}") String appDescription,
                                  @Value("${application.version}") String appVersion) {
@@ -67,7 +79,9 @@ public class OpenApiConfig {
                                 .url("https://springdoc.org"))
                         .contact(new Contact().name("Mazaleuski Yaraslau")
                                 .email("mazaleuski.ya@gmail.com")))
-                .servers(List.of(new Server().url("http://localhost:8080")
-                        .description("Dev service")));
+                .servers(List.of(new Server().url("http://localhost:8081")
+                        .description("Dev service")))
+                .components(new Components()
+                        .addSecuritySchemes("Bearer Authentication", createSecurityScheme()));
     }
 }

@@ -1,6 +1,7 @@
 package com.example.restwebservice.dto;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -42,4 +43,7 @@ public class UserDto extends BaseDto {
     @Pattern(regexp = "^\\+?[1-9][0-9]{11}$", message = "Некорректный номер телефона.")
     private String phoneNumber;
     private List<OrderDto> orders;
+
+    @NotNull
+    private List<RoleDto> roles;
 }

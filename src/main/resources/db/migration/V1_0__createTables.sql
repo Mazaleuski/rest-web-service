@@ -1,4 +1,3 @@
-CREATE SCHEMA IF NOT EXISTS shop_hib;
 USE shop_hib;
 
 CREATE TABLE `shop_hib`.`users`
@@ -8,7 +7,7 @@ CREATE TABLE `shop_hib`.`users`
     `surname`      VARCHAR(45) NOT NULL,
     `birthday`     DATE        NULL,
     `email`        VARCHAR(45) NOT NULL,
-    `password`     VARCHAR(45) NOT NULL,
+    `password`     VARCHAR(65) NOT NULL,
     `balance`      INT         NULL,
     `address`      VARCHAR(45) NOT NULL,
     `phone_number` VARCHAR(45) NOT NULL,

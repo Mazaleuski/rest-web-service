@@ -13,6 +13,7 @@ import java.util.Optional;
 public class UserConverter {
 
     private final OrderConverter orderConverter;
+    private final RoleConverter roleConverter;
 
     public UserDto toDto(User user) {
         return Optional.ofNullable(user).map(u -> UserDto.builder()
@@ -27,6 +28,8 @@ public class UserConverter {
                         .phoneNumber(u.getPhoneNumber())
                         .orders(Optional.ofNullable(u.getOrder()).map(o -> o
                                 .stream().map(orderConverter::toDto).toList()).orElse(List.of()))
+                        .roles(Optional.ofNullable(u.getRoles()).map(r -> r
+                                .stream().map(roleConverter::toDto).toList()).orElse(List.of()))
                         .build())
                 .orElse(null);
     }
@@ -43,6 +46,8 @@ public class UserConverter {
                         .phoneNumber(u.getPhoneNumber())
                         .order(Optional.ofNullable(u.getOrders()).map(o -> o
                                 .stream().map(orderConverter::fromDto).toList()).orElse(List.of()))
+                        .roles(Optional.ofNullable(u.getRoles()).map(r -> r
+                                .stream().map(roleConverter::fromDto).toList()).orElse(List.of()))
                         .build())
                 .orElse(null);
     }
