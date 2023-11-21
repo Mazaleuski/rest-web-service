@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 @AllArgsConstructor
 @Validated
 @Tag(name = "cart", description = "Cart Endpoints")
-
 public class CartController {
 
     private final CartService cartService;

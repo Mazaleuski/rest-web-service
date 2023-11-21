@@ -44,7 +44,6 @@ import java.util.Optional;
 @AllArgsConstructor
 @Validated
 @Tag(name = "order", description = "Order Endpoints")
-
 public class OrderController {
 
     private final OrderService orderService;
@@ -159,11 +158,11 @@ public class OrderController {
     })
     @PreAuthorize("hasAuthority('USER')")
     @GetMapping("/user/{id}")
-    public ResponseEntity<List<OrderDto>> getOrdersByUserId(
-            @Parameter(description = "User id") @PathVariable @Positive int id,
-            @Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
-            @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize) {
-        return Optional.ofNullable(orderService.getOrdersByUserId(id, pageNumber, pageSize))
+    public ResponseEntity<List<OrderDto>> getOrdersByUserId(@Parameter(description = "User id") @PathVariable @Positive int id,
+                                                            @Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
+                                                            @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize,
+                                                            @Parameter(required = true, description = "Search param") @RequestParam(defaultValue = "id") String param) {
+        return Optional.ofNullable(orderService.getOrdersByUserId(id, pageNumber, pageSize, param))
                 .map(dto -> new ResponseEntity<>(dto, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }

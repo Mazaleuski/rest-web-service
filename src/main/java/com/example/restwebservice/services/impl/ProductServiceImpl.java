@@ -43,14 +43,14 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
 
     @Override
-    public List<ProductDto> getAllProducts(int pageNumber, int pageSize) {
-        Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by("id").ascending());
+    public List<ProductDto> getAllProducts(int pageNumber, int pageSize, String param) {
+        Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by(param).ascending());
         return productRepository.findAll(paging).stream().map(productConverter::toDto).toList();
     }
 
     @Override
-    public List<ProductDto> searchProducts(SearchParamsDto searchParamsDto, int pageNumber, int pageSize) {
-        Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by("name").ascending());
+    public List<ProductDto> searchProducts(SearchParamsDto searchParamsDto, int pageNumber, int pageSize, String param) {
+        Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by(param).ascending());
         ProductSearchSpecification productSearchSpecification = new ProductSearchSpecification(searchParamsDto);
         return productRepository.findAll(productSearchSpecification, paging).stream().map(productConverter::toDto).toList();
     }

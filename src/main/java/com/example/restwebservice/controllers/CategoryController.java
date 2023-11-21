@@ -40,7 +40,6 @@ import java.util.Optional;
 @RequestMapping("/categories")
 @AllArgsConstructor
 @Validated
-
 public class CategoryController {
 
     private final CategoryService categoryService;
@@ -62,10 +61,10 @@ public class CategoryController {
     })
 
     @GetMapping("/all")
-    public ResponseEntity<List<CategoryDto>> getAllCategories(
-            @Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
-            @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize) {
-        return new ResponseEntity<>(categoryService.getAllCategories(pageNumber, pageSize), HttpStatus.OK);
+    public ResponseEntity<List<CategoryDto>> getAllCategories(@Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
+                                                              @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize,
+                                                              @Parameter(required = true, description = "Search param") @RequestParam(defaultValue = "id") String param) {
+        return new ResponseEntity<>(categoryService.getAllCategories(pageNumber, pageSize, param), HttpStatus.OK);
     }
 
     @Operation(

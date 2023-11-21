@@ -38,7 +38,6 @@ import java.util.Optional;
 @AllArgsConstructor
 @Validated
 @Tag(name = "user", description = "User Endpoints")
-
 public class UserController {
     private final UserService userService;
 

@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface CategoryService {
 
-    List<CategoryDto> getAllCategories(int pageNumber,int pageSize);
+    List<CategoryDto> getAllCategories(int pageNumber, int pageSize, String param);
 
     CategoryDto getCategoryById(int id);
 

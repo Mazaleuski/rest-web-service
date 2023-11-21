@@ -1,4 +1,3 @@
-CREATE SCHEMA IF NOT EXISTS shop_hib;
 USE shop_hib;
 
 CREATE TABLE `shop_hib`.`users`

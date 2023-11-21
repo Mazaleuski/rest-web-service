@@ -95,8 +95,8 @@ public class OrderService {
         return orderConverter.toDto(order);
     }
 
-    public List<OrderDto> getOrdersByUserId(int id, int pageNumber, int pageSize) {
-        Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by("id").ascending());
+    public List<OrderDto> getOrdersByUserId(int id, int pageNumber, int pageSize, String param) {
+        Pageable paging = PageRequest.of(pageNumber, pageSize, Sort.by(param).ascending());
         userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(String.format("User with id %d not found", id)));
         Page<Order> orders = orderRepository.findAllByUserId(id, paging);
