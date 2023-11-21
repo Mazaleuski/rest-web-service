@@ -61,8 +61,10 @@ public class CategoryController {
     })
 
     @GetMapping("/all")
-    public ResponseEntity<List<CategoryDto>> getAllCategories() {
-        return new ResponseEntity<>(categoryService.getAllCategories(), HttpStatus.OK);
+    public ResponseEntity<List<CategoryDto>> getAllCategories(
+            @Parameter(required = true, description = "Page number") @RequestParam int pageNumber,
+            @Parameter(required = true, description = "Item number per page") @RequestParam int pageSize) {
+        return new ResponseEntity<>(categoryService.getAllCategories(pageNumber, pageSize), HttpStatus.OK);
     }
 
     @Operation(

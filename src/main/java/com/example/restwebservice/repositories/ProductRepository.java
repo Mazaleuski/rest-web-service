@@ -1,20 +1,11 @@
 package com.example.restwebservice.repositories;
 
 import com.example.restwebservice.entities.Product;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-import java.util.List;
-
-public interface ProductRepository {
-
-    Product findById(int id);
-
-    List<Product> findByCategoryId(int id);
-
-    Product createOrUpdateProduct(Product product);
-
-    List<Product> findByNameOrDescription(String search);
-
-    List<Product> findAll();
-
-    void delete(int id);
+public interface ProductRepository extends JpaRepository<Product, Integer>, JpaSpecificationExecutor<Product> {
+    Page<Product> findAllByCategoryId(int categoryId, Pageable pageable);
 }

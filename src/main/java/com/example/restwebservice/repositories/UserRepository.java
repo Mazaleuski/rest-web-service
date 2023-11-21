@@ -1,18 +1,8 @@
 package com.example.restwebservice.repositories;
 
 import com.example.restwebservice.entities.User;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
-
-public interface UserRepository {
-
-    User createOrUpdateUser(User user);
-
-    List<User> findAll();
-
-    User findById(int id);
-
+public interface UserRepository extends JpaRepository<User, Integer> {
     User findByEmailAndPassword(String email, String password);
-
-    void delete(int id);
 }

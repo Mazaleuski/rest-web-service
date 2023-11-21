@@ -1,6 +1,7 @@
 package com.example.restwebservice.services;
 
 import com.example.restwebservice.dto.ProductDto;
+import com.example.restwebservice.dto.SearchParamsDto;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,11 +12,11 @@ import java.util.List;
 
 public interface ProductService {
 
-    List<ProductDto> getAllProducts();
+    List<ProductDto> getAllProducts(int pageNumber,int pageSize);
 
-    List<ProductDto> searchProducts(String search);
+    List<ProductDto> searchProducts(SearchParamsDto searchParamsDto,int pageNumber,int pageSize);
 
-    List<ProductDto> getProductByCategoryId(int id);
+    List<ProductDto> getProductByCategoryId(int id,int pageNumber,int pageSize);
 
     ProductDto createProduct(ProductDto productDto);
 

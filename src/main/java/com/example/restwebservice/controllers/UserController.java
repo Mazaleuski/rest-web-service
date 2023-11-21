@@ -164,7 +164,7 @@ public class UserController {
     })
 
     @DeleteMapping("/{id}")
-    public void deleteUser(@Parameter(required = true, description = "Product id") @PathVariable @Positive int id) {
+    public void deleteUser(@Parameter(required = true, description = "User id") @PathVariable @Positive int id) {
         userService.deleteUser(id);
     }
 }

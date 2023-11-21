@@ -28,7 +28,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserById(int id) {
-        User user = Optional.ofNullable(userRepository.findById(id))
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(String.format("User with id %d not found", id)));
         return userConverter.toDto(user);
     }
@@ -36,7 +36,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto createUser(UserDto userDto) {
         User user = userConverter.fromDto(userDto);
-        user = userRepository.createOrUpdateUser(user);
+        user = userRepository.save(user);
         return userConverter.toDto(user);
     }
 
@@ -44,20 +44,22 @@ public class UserServiceImpl implements UserService {
     public UserDto loginUser(UserDto userDto) throws AuthorizationException {
         User user = Optional.ofNullable(userRepository.findByEmailAndPassword(userDto.getEmail(), userDto.getPassword()))
                 .orElseThrow(() -> new AuthorizationException(String.format("User with email %s not registered", userDto.getEmail())));
-        return userConverter.toDto(userRepository.createOrUpdateUser(user));
+        return userConverter.toDto(userRepository.save(user));
     }
 
     @Override
     public UserDto updateUser(UserDto userDto) {
-        User user = Optional.ofNullable(userRepository.findById(userDto.getId()))
+        User user = userRepository.findById(userDto.getId())
                 .orElseThrow(() -> new EntityNotFoundException(String.format("User with id %d not found", userDto.getId())));
         user.setAddress(userDto.getAddress());
         user.setPhoneNumber(userDto.getPhoneNumber());
-        return userConverter.toDto(userRepository.createOrUpdateUser(user));
+        return userConverter.toDto(userRepository.save(user));
     }
 
     @Override
     public void deleteUser(int id) {
-        userRepository.delete(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(String.format("User with id %d not found", id)));
+        userRepository.delete(user);
     }
 }
